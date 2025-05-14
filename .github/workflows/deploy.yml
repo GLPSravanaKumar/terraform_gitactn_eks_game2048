@@ -46,7 +46,7 @@ jobs:
           terraform init \
             -backend-config="bucket=glps-test-backend-bucket" \
             -backend-config="region=ap-south-1" \
-            -backend-config="terraform_gitactn_eks_game2048/terraform.tfstate"
+            -backend-config="eksgame2048/terraform.tfstate"
           
       - name: Terraform Validate and Plan
         working-directory: .
