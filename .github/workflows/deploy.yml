@@ -1,0 +1,72 @@
+name: Deploy Game app2048 on EKS
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'Choose action to perform apply or destroy'
+        required: true
+        default: "apply"
+        
+env:
+  AWS_REGION: ap-south-1
+  CLUSTER_NAME: glps-eks-game2048
+
+jobs:  
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Install Required Tools
+        uses: azure/setup-helm@v3
+        with:
+          version: 'v3.14.0'
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.7.0
+
+      - name: Terraform Init
+        working-directory: .
+        run: |
+          terraform init \
+            -backend-config="bucket=glps-test-backend-bucket" \
+            -backend-config="region=ap-south-1" \
+            -backend-config="terraform_gitactn_eks_game2048/terraform.tfstate"
+          
+      - name: Terraform Validate and Plan
+        working-directory: .
+        run: |
+          terraform validate
+        
+          terraform plan -out=tfplan
+
+      - name: Terraform Apply or Destroy Infrastructure
+        working-directory: .
+        run: |
+          if [ "${{ github.event.inputs.action }}" == "destroy" ]; then
+              terraform destroy -auto-approve
+            else
+              terraform apply -auto-approve
+            fi
+
+      - name: Configure Kubernetes Access
+        run: |
+          aws eks update-kubeconfig \
+            --name ${CLUSTER_NAME} \
+            --region ${AWS_REGION}
+      
