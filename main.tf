@@ -184,7 +184,7 @@ resource "kubernetes_deployment" "deploy" {
     name = "deploy-2048"
     namespace = kubernetes_namespace.ns.metadata[0].name
     labels = {
-      app.kubernetes.io/name: "app-2048"
+      "app.kubernetes.io/name": "app-2048"
     }
   }
 
@@ -192,13 +192,13 @@ resource "kubernetes_deployment" "deploy" {
     replicas = 3
     selector {
       match_labels = {
-        app.kubernetes.io/name: "app-2048"
+        "app.kubernetes.io/name": "app-2048"
       }
     }
     template {
       metadata {
         labels = {
-          app.kubernetes.io/name: "app-2048"
+          "app.kubernetes.io/name": "app-2048"
         }
       }
       spec {
@@ -235,7 +235,7 @@ resource "kubernetes_service" "svc" {
   }
   spec {
     selector = {
-      app.kubernetes.io/name: "app-2048"
+      "app.kubernetes.io/name": "app-2048"
     }
     port {
       name        = "http"
