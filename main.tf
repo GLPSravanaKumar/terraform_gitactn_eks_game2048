@@ -79,6 +79,9 @@ resource "aws_iam_role" "eks_role" {
       }
     ]
   })
+  lifecycle {
+    prevent_destroy = false
+  }
   tags = {
     Name = "${var.cluster_name}/eks-role"
   }
@@ -107,6 +110,9 @@ resource "aws_iam_role" "eks_node_role" {
       Action         = "sts:AssumeRole"
     }]
   })
+  lifecycle {
+    prevent_destroy = false
+  }
 }
 
 resource "aws_iam_role_policy_attachment" "eks_worker_node_policy" {
@@ -262,6 +268,9 @@ resource "aws_iam_policy" "alb_controller_policy" {
   name   = "AWSLoadBalancerControllerIAMPolicy"
   description = "Ingress controller policy for ALB"
   policy = file("${path.module}/iam_policy_alb_controller.json")
+  lifecycle {
+    prevent_destroy = false
+  }
 }
 
 resource "aws_iam_role" "alb_controller" {
@@ -281,6 +290,9 @@ resource "aws_iam_role" "alb_controller" {
       }
     }]
   })
+  lifecycle {
+    prevent_destroy = false
+  }
 }
 
 resource "aws_iam_role_policy_attachment" "alb_controller_attach" {
