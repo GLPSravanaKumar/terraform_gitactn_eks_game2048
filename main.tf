@@ -20,8 +20,8 @@ resource "aws_subnet" "public" {
   tags = {
     Name                                        = "${var.cluster_name}/public-subnet-${count.index}"
     "kubernetes.io/cluster/${var.cluster_name}" = "owned"
-    "kubernetes.io/role/alb"                    = "1"
-    "kubernetes.io/role/elb"                    = "1" 
+  #  "kubernetes.io/role/alb"                    = "1"
+     "kubernetes.io/role/elb"                    = "1" 
   }
 }
 
@@ -347,15 +347,15 @@ resource "kubernetes_ingress_v1" "webapp_ingress" {
     namespace = kubernetes_namespace.ns.metadata[0].name
     name = "ingress-2048"
     annotations = {
-      "kubernetes.io/ingress.class"                     = "alb"
-      "alb.ingress.kubernetes.io/scheme"                = "internet-facing"
-      "alb.ingress.kubernetes.io/target-type"           = "ip"
-      "alb.ingress.kubernetes.io/listen-ports"          = "[{\"HTTP\": 80}]"
+      "kubernetes.io/ingress.class"                     = "elb"
+      "elb.ingress.kubernetes.io/scheme"                = "internet-facing"
+      "elb.ingress.kubernetes.io/target-type"           = "ip"
+      "elb.ingress.kubernetes.io/listen-ports"          = "[{\"HTTP\": 80}]"
     }
   }
 
   spec {
-    ingress_class_name = "alb"
+    ingress_class_name = "elb"
     rule {
       http {
         path {
