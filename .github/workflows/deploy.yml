@@ -4,10 +4,14 @@ on:
   workflow_dispatch:
     inputs:
       action:
-        description: 'Choose action to perform apply or destroy'
+        description: 'Choose action to perform: apply or destroy'
         required: true
         default: "apply"
-        
+        type: choice
+        options:
+          - apply
+          - destroy
+
 env:
   AWS_REGION: ap-south-1
   CLUSTER_NAME: glps-eks-game2048
@@ -47,26 +51,26 @@ jobs:
             -backend-config="bucket=glps-test-backend-bucket" \
             -backend-config="region=ap-south-1" \
             -backend-config="key=eksgame2048/terraform.tfstate"
-          
+
       - name: Terraform Validate and Plan
+        if: ${{ github.event.inputs.action == 'apply' }}
         working-directory: .
         run: |
           terraform validate
-        
           terraform plan -out=tfplan
 
       - name: Terraform Apply or Destroy Infrastructure
         working-directory: .
         run: |
           if [ "${{ github.event.inputs.action }}" == "destroy" ]; then
-              terraform destroy -auto-approve
-            else
-              terraform apply -auto-approve
-            fi
+            terraform destroy -auto-approve
+          else
+            terraform apply -auto-approve tfplan
+          fi
 
       - name: Configure Kubernetes Access
+        if: ${{ github.event.inputs.action == 'apply' }}
         run: |
           aws eks update-kubeconfig \
             --name ${CLUSTER_NAME} \
             --region ${AWS_REGION}
-      
