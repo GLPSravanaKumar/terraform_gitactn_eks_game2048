@@ -262,6 +262,9 @@ resource "aws_iam_openid_connect_provider" "oidc" {
   thumbprint_list = [data.tls_certificate.oidc_thumbprint.certificates[0].sha1_fingerprint]
 
   depends_on = [ aws_eks_cluster.eks] 
+  lifecycle {
+    prevent_destroy = false
+  }
 }
 
 resource "aws_iam_policy" "alb_controller_policy" {
