@@ -2,6 +2,8 @@ grafana:
   adminPassword: "admin"
   service:
     type: LoadBalancer
+    annotations:
+      service.beta.kubernetes.io/aws-load-balancer-type: external
   defaultDashboardsEnabled: true
   sidecar:
     dashboards:
