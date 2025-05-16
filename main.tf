@@ -22,6 +22,7 @@ resource "aws_subnet" "public" {
     "kubernetes.io/cluster/${var.cluster_name}" = "owned"
     "kubernetes.io/role/alb"                    = "1"
     "kubernetes.io/role/elb"                    = "1" 
+    "kubernetes.io/role/internal-elb"         = "1" 
   }
 }
 
