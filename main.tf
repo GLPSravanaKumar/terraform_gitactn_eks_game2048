@@ -376,23 +376,3 @@ resource "kubernetes_ingress_v1" "webapp_ingress" {
   }
   depends_on = [helm_release.alb_controller]
 }
-
-resource "kubernetes_namespace" "grafana" {
-  metadata {
-    name = "monitoring"
-  }
-  depends_on = [ aws_eks_cluster.eks, aws_eks_node_group.node_group ]
-}
-
-resource "helm_release" "kube_prometheus_stack" {
-  name             = "kube-prometheus-stack"
-  namespace        = kubernetes_namespace.grafana.metadata[0].name
-  create_namespace = true
-  repository       = "https://prometheus-community.github.io/helm-charts"
-  chart            = "kube-prometheus-stack"
-  version          = "57.0.0"
-
-  values = [
-    file("${path.module}/prometheus-values.yaml")
-  ]
-}
