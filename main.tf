@@ -376,3 +376,54 @@ resource "kubernetes_ingress_v1" "webapp_ingress" {
   }
   depends_on = [helm_release.alb_controller]
 }
+
+resource "helm_release" "prometheus" {
+  name       = "prometheus"
+  namespace  = "monitoring"
+  repository = "https://prometheus-community.github.io/helm-charts"
+  chart      = "kube-prometheus-stack"
+  version    = "45.7.1"
+
+  create_namespace = true
+
+  set {
+    name  = "grafana.enabled"
+    value = "false" # We'll install Grafana separately
+  }
+
+  set {
+    name  = "prometheus.prometheusSpec.service.type"
+    value = "ClusterIP"
+  }
+}
+
+resource "helm_release" "grafana" {
+  name       = "grafana"
+  namespace  = "monitoring"
+  repository = "https://grafana.github.io/helm-charts"
+  chart      = "grafana"
+  version    = "7.3.10"
+
+  set {
+    name  = "service.type"
+    value = "LoadBalancer"
+  }
+
+  set {
+    name  = "adminPassword"
+    value = "admin123"
+  }
+
+  set {
+    name  = "persistence.enabled"
+    value = "true"
+  }
+
+  set {
+    name  = "persistence.size"
+    value = "2Gi"
+  }
+
+  depends_on = [helm_release.prometheus]
+}
+
