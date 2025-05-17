@@ -386,15 +386,40 @@ resource "helm_release" "prometheus" {
 
   create_namespace = true
 
-  set {
-    name  = "grafana.enabled"
-    value = "false" # We'll install Grafana separately
-  }
+  values = [
+    yamlencode({
+      grafana = {
+        adminPassword = "admin"
+        service = {
+          type = "LoadBalancer"
+          annotations = {
+            "service.beta.kubernetes.io/aws-load-balancer-type" = "internal-elb"
+          }
+        }
+      }
+      prometheus = {
+        service = {
+          type = "ClusterIP"
+        }
+      }
+      prometheusOperator = {
+        admissionWebhooks = {
+          enabled = false
+        }
+      }
+      alertmanager = {
+        enabled = true
+      }
+      kubelet = {
+        serviceMonitor = {
+          enabled = true
+        }
+      }
+    })
+  ]
 
-  set {
-    name  = "prometheus.prometheusSpec.service.type"
-    value = "ClusterIP"
-  }
+  timeout = 600
+  depends_on = [aws_eks_node_group.node_group]
 }
 
 resource "helm_release" "grafana" {
