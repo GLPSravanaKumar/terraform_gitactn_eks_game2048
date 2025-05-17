@@ -422,28 +422,3 @@ resource "helm_release" "prometheus" {
   depends_on = [aws_eks_node_group.node_group]
 }
 
-resource "helm_release" "grafana" {
-  name       = "grafana"
-  namespace  = "monitoring"
-  repository = "https://grafana.github.io/helm-charts"
-  chart      = "grafana"
-  version    = "7.3.10"
-
-  set {
-    name  = "service.type"
-    value = "LoadBalancer"
-  }
-
-  set {
-    name  = "adminPassword"
-    value = "admin123"
-  }
-
-  set {
-    name  = "service.annotations.service.beta.kubernetes.io/aws-load-balancer-type"
-    value = "internal-elb"
-  }
-
-  depends_on = [helm_release.prometheus]
-}
-
