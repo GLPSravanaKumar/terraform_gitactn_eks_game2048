@@ -440,13 +440,8 @@ resource "helm_release" "grafana" {
   }
 
   set {
-    name  = "persistence.enabled"
-    value = "true"
-  }
-
-  set {
-    name  = "persistence.size"
-    value = "2Gi"
+    name  = "service.annotations.service.beta.kubernetes.io/aws-load-balancer-type"
+    value = "internal-elb"
   }
 
   depends_on = [helm_release.prometheus]
