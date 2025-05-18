@@ -388,36 +388,3 @@ resource "kubernetes_namespace" "monitor" {
   
 }
 
-resource "helm_release" "grafana" {
-  name       = "grafana"
-  repository = "https://grafana.github.io/helm-charts"
-  chart      = "grafana"
-  namespace  = kubernetes_namespace.monitor.metadata[0].name
-  version    = "6.29.1"
-  wait       = "false"
-
-  set {
-    name  = "clusterName"
-    value = var.cluster_name
-  }
-  set {
-    name  = "region"
-    value = var.region
-  }
-
-  depends_on = [ kubernetes_namespace.monitor ]
-}
-
-resource "helm_release" "kube_prometheus_stack" {
-  name             = "kube-prometheus-stack"
-  namespace        = kubernetes_namespace.monitor.metadata[0].name
-  repository       = "https://prometheus-community.github.io/helm-charts"
-  chart            = "kube-prometheus-stack"
-  version          = "57.0.0"
-
-  values = [
-    file("${path.module}/prometheus-values.yaml")
-  ]
-
-  depends_on = [ kubernetes_namespace.monitor] 
-}
