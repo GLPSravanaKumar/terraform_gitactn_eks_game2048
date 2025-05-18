@@ -22,7 +22,7 @@ resource "aws_subnet" "public" {
     "kubernetes.io/cluster/${var.cluster_name}" = "owned"
     "kubernetes.io/role/alb"                    = "1"
     "kubernetes.io/role/elb"                    = "1" 
-    "kubernetes.io/role/internal-elb"         = "1" 
+    "kubernetes.io/role/internal-elb"           = "1" 
   }
 }
 
@@ -212,7 +212,7 @@ resource "kubernetes_deployment" "deploy" {
         container {
           image = "public.ecr.aws/l6m2t8p7/docker-2048:latest"
           name  = "container-2048"
-          image_pull_policy = "Always"
+          image_pull_policy = "IfNotPresent"
           port {
             container_port = 80
           }
@@ -377,48 +377,47 @@ resource "kubernetes_ingress_v1" "webapp_ingress" {
   depends_on = [helm_release.alb_controller]
 }
 
-resource "helm_release" "prometheus" {
-  name       = "prometheus"
-  namespace  = "monitoring"
-  repository = "https://prometheus-community.github.io/helm-charts"
-  chart      = "kube-prometheus-stack"
-  version    = "45.7.1"
-
-  create_namespace = true
-
-  values = [
-    yamlencode({
-      grafana = {
-        adminPassword = "admin"
-        service = {
-          type = "LoadBalancer"
-          annotations = {
-            "service.beta.kubernetes.io/aws-load-balancer-type" = "internet-facing"
-          }
-        }
-      }
-      prometheus = {
-        service = {
-          type = "ClusterIP"
-        }
-      }
-      prometheusOperator = {
-        admissionWebhooks = {
-          enabled = false
-        }
-      }
-      alertmanager = {
-        enabled = true
-      }
-      kubelet = {
-        serviceMonitor = {
-          enabled = true
-        }
-      }
-    })
-  ]
-
-  timeout = 600
-  depends_on = [aws_eks_node_group.node_group]
+resource "kubernetes_namespace" "monitor" {
+  metadata {
+    name = "monitor"
+  }
+  depends_on = [
+    aws_eks_cluster.eks,
+    aws_eks_node_group.node_group
+    ]
+  
 }
 
+resource "helm_release" "grafana" {
+  name       = "grafana"
+  repository = "https://grafana.github.io/helm-charts"
+  chart      = "grafana"
+  namespace  = kubernetes_namespace.monitor.metadata[0].name
+  version    = "6.29.1"
+  wait       = "false"
+
+  set {
+    name  = "clusterName"
+    value = var.cluster_name
+  }
+  set {
+    name  = "region"
+    value = var.region
+  }
+
+  depends_on = [ kubernetes_namespace.monitor ]
+}
+
+resource "helm_release" "kube_prometheus_stack" {
+  name             = "kube-prometheus-stack"
+  namespace        = kubernetes_namespace.monitor.metadata[0].name
+  repository       = "https://prometheus-community.github.io/helm-charts"
+  chart            = "kube-prometheus-stack"
+  version          = "57.0.0"
+
+  values = [
+    file("${path.module}/prometheus-values.yaml")
+  ]
+
+  depends_on = [ kubernetes_namespace.monitor] 
+}

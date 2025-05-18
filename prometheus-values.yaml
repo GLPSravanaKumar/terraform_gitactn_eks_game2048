@@ -1,0 +1,26 @@
+grafana:
+  adminPassword: "admin"
+  service:
+    type: LoadBalancer
+    annotations:
+      service.beta.kubernetes.io/aws-load-balancer-scheme: internet-facing
+  defaultDashboardsEnabled: true
+  sidecar:
+    dashboards:
+      enabled: true
+
+prometheus:
+  service:
+    type: ClusterIP
+
+prometheusOperator:
+  admissionWebhooks:
+    enabled: false
+
+alertmanager:
+  enabled: true
+
+# Optional: Scrape all namespaces
+kubelet:
+  serviceMonitor:
+    enabled: true
