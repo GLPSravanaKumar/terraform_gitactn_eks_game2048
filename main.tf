@@ -161,8 +161,8 @@ resource "aws_eks_node_group" "node_group" {
   }
 
   ami_type       = "AL2_x86_64"  # Amazon Linux 2
-  instance_types = ["t2.micro"]
-  disk_size      = 10
+  instance_types = ["t3.medium"]
+  disk_size      = 20
 
   tags = {
     "Name" = "${var.cluster_name}/node_group"
