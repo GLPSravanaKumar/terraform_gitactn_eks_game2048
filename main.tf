@@ -161,8 +161,8 @@ resource "aws_eks_node_group" "node_group" {
   }
 
   ami_type       = "AL2_x86_64"  # Amazon Linux 2
-  instance_types = ["t3.medium"]
-  disk_size      = 20
+  instance_types = ["t2.micro"]
+  disk_size      = 10
 
   tags = {
     "Name" = "${var.cluster_name}/node_group"
@@ -196,7 +196,7 @@ resource "kubernetes_deployment" "deploy" {
   }
 
   spec {
-    replicas = 3
+    replicas = 1
     selector {
       match_labels = {
         "app.kubernetes.io/name": "app-2048"

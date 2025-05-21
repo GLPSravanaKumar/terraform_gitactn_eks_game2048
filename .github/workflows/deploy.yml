@@ -70,8 +70,4 @@ jobs:
             --name ${CLUSTER_NAME} \
             --region ${AWS_REGION}
 
-      - name: prometheus helm chart install
-        run: |
-          helm repo add grafana https://grafana.github.io/helm-charts
-          helm repo update
-          helm install grafana grafana/grafana --namespace monitor
+      
