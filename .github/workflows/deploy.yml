@@ -64,8 +64,8 @@ jobs:
             echo "Destroying EKS cluster..."
             terraform destroy -target=aws_eks_cluster.this -auto-approve || true
 
-            aws eks delete-nodegroup --cluster-name {CLUSTER_NAME} --nodegroup-name glps-eks-game2048-node-group --region {AWS_REGION}
-            aws eks delete-cluster --name {CLUSTER_NAME} --region {AWS_REGION}
+            aws eks delete-nodegroup --cluster-name ${{env.CLUSTER_NAME}} --nodegroup-name glps-eks-game2048-node-group --region ${{env.AWS_REGION}}
+            aws eks delete-cluster --name ${{env.CLUSTER_NAME}} --region ${{env.AWS_REGION}}
             aws iam detach-role-policy --role-name eks2048role --policy-arn arn:aws:iam::aws:policy/AmazonEKSVPCResourceController
             aws iam detach-role-policy --role-name eks2048role --policy-arn arn:aws:iam::aws:policy/AmazonEKSClusterPolicy
             aws iam detach-role-policy --role-name eksNodeGroupRole --policy-arn arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly
