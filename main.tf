@@ -131,17 +131,7 @@ resource "aws_iam_role_policy_attachment" "ec2_container_registry_readonly" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
 }
 
-data "aws_eks_cluster" "cluster" {
-  name = "your-cluster-name"
-}
 
-data "aws_eks_cluster_auth" "cluster" {
-  name = data.aws_eks_cluster.cluster.name
-}
-
-data "aws_iam_openid_connect_provider" "oidc" {
-  url = data.aws_eks_cluster.cluster.identity[0].oidc[0].issuer
-}
 
 resource "aws_iam_role" "ebs_csi_driver" {
   name = "AmazonEKS_EBS_CSI_DriverRole"
