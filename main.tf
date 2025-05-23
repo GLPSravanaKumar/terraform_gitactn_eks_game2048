@@ -133,7 +133,7 @@ resource "aws_iam_role_policy_attachment" "ec2_container_registry_readonly" {
 
 resource "aws_iam_role_policy_attachment" "ebs_drive_policy" {
   role = aws_iam_role.eks_node_role.name
-  policy_arn = "arn:aws:iam::aws:policy/AmazonEBSCSIDriverPolicy"
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy"
 }
 
 resource "aws_eks_cluster" "eks" {
