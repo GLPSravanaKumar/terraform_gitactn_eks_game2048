@@ -141,12 +141,12 @@ resource "aws_iam_role" "ebs_csi_driver" {
     Statement = [{
       Effect = "Allow",
       Principal = {
-        Federated = data.aws_iam_openid_connect_provider.oidc.arn
+        Federated = aws_iam_openid_connect_provider.oidc.arn
       },
       Action = "sts:AssumeRoleWithWebIdentity",
       Condition = {
         StringEquals = {
-          "${replace(data.aws_eks_cluster.cluster.identity[0].oidc[0].issuer, "https://", "")}:sub" = "system:serviceaccount:kube-system:ebs-csi-controller-sa"
+          "${replace(aws_eks_cluster.eks.identity[0].oidc[0].issuer, "https://", "")}:sub" = "system:serviceaccount:kube-system:ebs-csi-controller-sa"
         }
       }
     }]
