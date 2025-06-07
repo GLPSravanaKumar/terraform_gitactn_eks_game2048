@@ -44,9 +44,9 @@ jobs:
         working-directory: .
         run: |
           terraform init \
-            -backend-config="bucket=glps-test-backend-bucket" \
+            -backend-config="bucket=optum-prod-bkt" \
             -backend-config="region=ap-south-1" \
-            -backend-config="key=eksgame2048/terraform.tfstate"
+            -backend-config="key=terraform.tfstate"
 
       - name: Terraform Validate and Plan
         working-directory: .
@@ -63,19 +63,6 @@ jobs:
 
             echo "Destroying EKS cluster..."
             terraform destroy -target=aws_eks_cluster.this -auto-approve || true
-
-            aws eks delete-nodegroup --cluster-name ${{env.CLUSTER_NAME}} --nodegroup-name glps-eks-game2048-node-group --region ${{env.AWS_REGION}}
-            aws eks delete-cluster --name ${{env.CLUSTER_NAME}} --region ${{env.AWS_REGION}}
-            aws iam detach-role-policy --role-name eks2048role --policy-arn arn:aws:iam::aws:policy/AmazonEKSVPCResourceController
-            aws iam detach-role-policy --role-name eks2048role --policy-arn arn:aws:iam::aws:policy/AmazonEKSClusterPolicy
-            aws iam detach-role-policy --role-name eksNodeGroupRole --policy-arn arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly
-            aws iam detach-role-policy --role-name eksNodeGroupRole --policy-arn arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy
-            aws iam detach-role-policy --role-name eksNodeGroupRole --policy-arn arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy
-            aws iam detach-role-policy --role-name eks2048-alb-controller-role --policy-arn arn:aws:iam::471112932176:policy/AWSLoadBalancerControllerIAMPolicy
-            aws iam delete-policy --policy-arn arn:aws:iam::471112932176:policy/AWSLoadBalancerControllerIAMPolicy
-            aws iam delete-role --role-name eksNodeGroupRole
-            aws iam delete-role --role-name eks2048role
-            aws iam delete-role --role-name eks2048-alb-controller-role
 
 
             echo "Destroying remaining infrastructure..."

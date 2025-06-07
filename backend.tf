@@ -1,7 +1,7 @@
 terraform {
   backend "s3" {
-    bucket         = "glps-test-backend-bucket"
-    key            = "eksgame2048/terraform.tfstate"
+    bucket         = "optum-prod-bkt"
+    key            = "terraform.tfstate"
     region         = "ap-south-1"
     encrypt        = true
   }
