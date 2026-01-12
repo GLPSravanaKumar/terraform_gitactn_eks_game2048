@@ -312,6 +312,7 @@ resource "kubernetes_service_account" "alb_sa" {
       "eks.amazonaws.com/role-arn" = aws_iam_role.alb_controller.arn
     }
   }
+  depends_on = [ aws_eks_cluster.eks ]
 }
 
 resource "helm_release" "alb_controller" {
@@ -340,7 +341,9 @@ resource "helm_release" "alb_controller" {
     name  = "region"
     value = var.region
   }
-  depends_on = [aws_iam_role_policy_attachment.alb_controller_attach]
+  depends_on = [aws_iam_role_policy_attachment.alb_controller_attach,
+  aws_eks_cluster.eks,
+  kubernetes_service_account.alb_sa]
 }
 
 resource "kubernetes_ingress_v1" "webapp_ingress" {
