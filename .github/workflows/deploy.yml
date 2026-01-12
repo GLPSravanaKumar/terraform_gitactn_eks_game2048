@@ -45,7 +45,7 @@ jobs:
         run: |
           terraform init \
             -backend-config="bucket=optum-prod-bkt" \
-            -backend-config="region=ap-south-1" \
+            -backend-config="region=us-east-1" \
             -backend-config="key=terraform.tfstate"
 
       - name: Terraform Validate and Plan
