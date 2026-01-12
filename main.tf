@@ -136,9 +136,7 @@ resource "aws_eks_cluster" "eks" {
   role_arn = aws_iam_role.eks_role.arn
 
   vpc_config {
-    subnet_ids = concat(
-      aws_subnet.public[*].id,
-      )
+    subnet_ids = aws_subnet.public[*].id
     }  
 
     depends_on = [aws_iam_role_policy_attachment.EKSClusterPolicy]
@@ -160,7 +158,7 @@ resource "aws_eks_node_group" "node_group" {
     min_size     = 1
   }
 
-  ami_type       = "AL2_x86_64"  # Amazon Linux 2
+  ami_type       = "AL2023_x86_64_STANDARD"  # Amazon Linux 2
   instance_types = ["t3.medium"]
   disk_size      = 10
 
@@ -320,7 +318,7 @@ resource "helm_release" "alb_controller" {
   namespace  = "kube-system"
   repository = "https://aws.github.io/eks-charts"
   chart      = "aws-load-balancer-controller"
-  version    = "6.0.1"
+  version    = "1.7.1"
 
   set {
     name  = "clusterName"
