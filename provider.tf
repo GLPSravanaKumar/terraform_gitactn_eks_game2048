@@ -30,15 +30,18 @@ provider "aws" {
 # 1. Fetch EKS cluster information
 data "aws_eks_cluster" "eks" {
   name = aws_eks_cluster.eks.name
+  depends_on = [ aws_eks_cluster.eks ]
 }
 
 # 2. Fetch EKS cluster auth informatio
 data "aws_eks_cluster_auth" "eks" {
   name = aws_eks_cluster.eks.name
+  depends_on = [ data.aws_eks_cluster.eks ]
 }
 
 data "tls_certificate" "oidc_thumbprint" {
   url = aws_eks_cluster.eks.identity[0].oidc[0].issuer
+  depends_on = [ aws_eks_cluster.eks ]
 }
 
 
