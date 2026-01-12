@@ -320,25 +320,24 @@ resource "helm_release" "alb_controller" {
   chart      = "aws-load-balancer-controller"
   version    = "1.7.1"
 
-  set 
-  { 
-    name = "clusterName" 
-    value = var.cluster_name 
+  set {
+    name  = "clusterName"
+    value = var.cluster_name
   }
-  set 
-  { 
-    name = "serviceAccount.create" 
-    value = "false" 
-  } 
-  set 
-  { 
-    name = "serviceAccount.name" 
-    value = "aws-load-balancer-controller" 
-  } 
-  set 
-  { 
-    name = "region" 
-    value = var.region 
+
+  set {
+    name  = "serviceAccount.create"
+    value = "false"
+  }
+
+  set {
+    name  = "serviceAccount.name"
+    value = "aws-load-balancer-controller"
+  }
+
+  set {
+    name  = "region"
+    value = var.region
   }
   
   depends_on = [aws_iam_role_policy_attachment.alb_controller_attach,
