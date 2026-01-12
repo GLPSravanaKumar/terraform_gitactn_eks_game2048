@@ -36,7 +36,7 @@ data "aws_eks_cluster" "eks" {
 # 2. Fetch EKS cluster auth informatio
 data "aws_eks_cluster_auth" "eks" {
   name = aws_eks_cluster.eks.name
-  depends_on = [ data.aws_eks_cluster.eks ]
+  depends_on = [ aws_eks_cluster.eks ]
 }
 
 data "tls_certificate" "oidc_thumbprint" {

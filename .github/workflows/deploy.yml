@@ -9,7 +9,7 @@ on:
         default: "apply"
 
 env:
-  AWS_REGION: us-east-1
+  AWS_REGION: ap-south-1
   CLUSTER_NAME: glps-eks-game2048
 
 jobs:
