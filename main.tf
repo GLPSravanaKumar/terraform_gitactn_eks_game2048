@@ -21,8 +21,6 @@ resource "aws_subnet" "public" {
     Name                                        = "${var.cluster_name}/public-subnet-${count.index}"
     "kubernetes.io/cluster/${var.cluster_name}" = "owned"
     "kubernetes.io/role/alb"                    = "1"
-    "kubernetes.io/role/elb"                    = "1" 
-    "kubernetes.io/role/internal-elb"           = "1" 
   }
 }
 
@@ -180,8 +178,10 @@ resource "kubernetes_namespace" "ns" {
   }
   depends_on = [
     aws_eks_cluster.eks,
-    aws_eks_node_group.node_group
-    ]
+    aws_eks_node_group.node_group,
+    aws_iam_role.eks_role,
+    aws_iam_role.eks_node_role
+  ]
 }
 
 resource "kubernetes_deployment" "deploy" {
@@ -320,25 +320,27 @@ resource "helm_release" "alb_controller" {
   chart      = "aws-load-balancer-controller"
   version    = "1.7.1"
 
-  set {
+  set = [
+  {
     name  = "clusterName"
     value = var.cluster_name
-  }
+  },
 
-  set {
+  {
     name  = "serviceAccount.create"
     value = "false"
-  }
+  },
 
-  set {
+  {
     name  = "serviceAccount.name"
     value = "aws-load-balancer-controller"
-  }
+  },
 
-  set {
+  {
     name  = "region"
     value = var.region
   }
+  ]
   depends_on = [aws_iam_role_policy_attachment.alb_controller_attach,
   aws_eks_cluster.eks,
   kubernetes_service_account.alb_sa]
@@ -349,7 +351,7 @@ resource "kubernetes_ingress_v1" "webapp_ingress" {
     namespace = kubernetes_namespace.ns.metadata[0].name
     name = "ingress-2048"
     annotations = {
-      "kubernetes.io/ingress.class"                     = "alb"
+      "ingress_class_name"                     = "alb"
       "alb.ingress.kubernetes.io/scheme"                = "internet-facing"
       "alb.ingress.kubernetes.io/target-type"           = "ip"
       "alb.ingress.kubernetes.io/listen-ports"          = "[{\"HTTP\": 80}]"
@@ -378,7 +380,7 @@ resource "kubernetes_ingress_v1" "webapp_ingress" {
   depends_on = [helm_release.alb_controller]
 }
 
-resource "kubernetes_namespace" "monitor" {
+/* resource "kubernetes_namespace" "monitor" {
   metadata {
     name = "monitor"
   }
@@ -387,5 +389,5 @@ resource "kubernetes_namespace" "monitor" {
     aws_eks_node_group.node_group
     ]
   
-}
+} */
 
