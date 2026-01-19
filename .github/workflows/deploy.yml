@@ -55,6 +55,7 @@ jobs:
 
       - name: Terraform Validate and Plan
         working-directory: .
+        if: ${{ github.event.inputs.action == 'apply' }}
         run: |
           terraform validate
           terraform plan -out=tfplan
