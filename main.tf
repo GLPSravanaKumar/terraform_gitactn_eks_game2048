@@ -185,6 +185,7 @@ resource "aws_eks_node_group" "node_group" {
 }
 
 resource "kubernetes_namespace" "ns" {
+  count = var.enable_k8s ? 1 : 0
   metadata {
     name = "game-2048"
   }
@@ -197,6 +198,7 @@ resource "kubernetes_namespace" "ns" {
 }
 
 resource "kubernetes_deployment" "deploy" {
+  count = var.enable_k8s ? 1 : 0
   metadata {
     name      = "deploy-2048"
     namespace = kubernetes_namespace.ns.metadata[0].name
@@ -246,6 +248,7 @@ resource "kubernetes_deployment" "deploy" {
 }
 
 resource "kubernetes_service" "svc" {
+  count = var.enable_k8s ? 1 : 0
   metadata {
     namespace = kubernetes_namespace.ns.metadata[0].name
     name      = "svc-2048"
@@ -266,6 +269,7 @@ resource "kubernetes_service" "svc" {
 }
 
 resource "kubernetes_ingress_v1" "webapp_ingress" {
+  count = var.enable_k8s ? 1 : 0
   metadata {
     namespace = kubernetes_namespace.ns.metadata[0].name
     name      = "ingress-2048"
@@ -367,6 +371,7 @@ resource "aws_iam_role_policy_attachment" "alb_controller_attach" {
 }
 
 resource "kubernetes_service_account" "alb_sa" {
+  count = var.enable_k8s ? 1 : 0
   metadata {
     name      = "aws-load-balancer-controller"
     namespace = "kube-system"
@@ -378,6 +383,7 @@ resource "kubernetes_service_account" "alb_sa" {
 }
 
 resource "helm_release" "alb_controller" {
+  count = var.enable_k8s ? 1 : 0
   name       = "aws-load-balancer-controller"
   namespace  = "kube-system"
   repository = "https://aws.github.io/eks-charts"

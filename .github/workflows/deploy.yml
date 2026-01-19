@@ -117,4 +117,4 @@ jobs:
       - name: Destroy Remaining Infrastructure
         if: ${{ github.event.inputs.action == 'destroy' }}
         run: |
-          terraform destroy -auto-approve
+          terraform destroy -auto-approve -var="enable_k8s=false"
