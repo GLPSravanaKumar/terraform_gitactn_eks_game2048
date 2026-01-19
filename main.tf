@@ -315,7 +315,7 @@ resource "aws_iam_openid_connect_provider" "oidc" {
   }
 } */
 
-ephemeral "aws_eks_cluster_auth" "eks" {
+data "aws_eks_cluster_auth" "eks" {
   name       = aws_eks_cluster.eks.id
   depends_on = [aws_eks_cluster.eks]
 }
