@@ -72,15 +72,27 @@ jobs:
             --region ${AWS_REGION}
 
       # ---------------- DESTROY ----------------
-      - name: Configure Kubernetes Access (Destroy)
+      - name: Check if EKS cluster exists
         if: ${{ github.event.inputs.action == 'destroy' }}
+        id: check_cluster
+        run: |
+          if aws eks describe-cluster \
+            --name ${CLUSTER_NAME} \
+            --region ${AWS_REGION} >/dev/null 2>&1; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Configure Kubernetes Access (Destroy)
+        if: steps.check_cluster.outputs.exists == 'true'
         run: |
           aws eks update-kubeconfig \
             --name ${CLUSTER_NAME} \
             --region ${AWS_REGION}
 
       - name: Delete Kubernetes Resources FIRST
-        if: ${{ github.event.inputs.action == 'destroy' }}
+        if: steps.check_cluster.outputs.exists == 'true'
         run: |
           kubectl delete ingress --all -A --ignore-not-found
           kubectl delete svc --all -A --ignore-not-found
@@ -88,17 +100,17 @@ jobs:
           kubectl delete pods --all -A --ignore-not-found
 
       - name: Destroy Helm Releases
-        if: ${{ github.event.inputs.action == 'destroy' }}
+        if: steps.check_cluster.outputs.exists == 'true'
         run: |
           terraform destroy -target=helm_release.alb_controller -auto-approve || true
 
       - name: Destroy Node Groups
-        if: ${{ github.event.inputs.action == 'destroy' }}
+        if: steps.check_cluster.outputs.exists == 'true'
         run: |
           terraform destroy -target=aws_eks_node_group.node_group -auto-approve || true
 
       - name: Destroy EKS Cluster
-        if: ${{ github.event.inputs.action == 'destroy' }}
+        if: steps.check_cluster.outputs.exists == 'true'
         run: |
           terraform destroy -target=aws_eks_cluster.eks -auto-approve || true
 
