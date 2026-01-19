@@ -4,8 +4,12 @@ on:
   workflow_dispatch:
     inputs:
       action:
-        description: 'Choose action to perform: apply or destroy'
+        description: 'Choose action to perform'
         required: true
+        type: choice
+        options:
+          - apply
+          - destroy
         default: "apply"
 
 env:
