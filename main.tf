@@ -8,7 +8,7 @@ resource "aws_vpc" "main" {
   enable_dns_support   = true
   tags = {
     Name = "${var.cluster_name}/vpc"
-    "kubernetes.io/ingress.class" = "alb"
+    "kubernetes.io/role/elb" = "1"
     "kubernetes.io/cluster/${var.cluster_name}" = "owned"
   }
 }
@@ -22,7 +22,7 @@ resource "aws_subnet" "public" {
   tags = {
     Name                                        = "${var.cluster_name}/public-subnet-${count.index}"
     "kubernetes.io/cluster/${var.cluster_name}" = "owned"
-    "kubernetes.io/ingress.class"                    = "alb"
+    "kubernetes.io/role/elb"                    = "1"
   }
 }
 
