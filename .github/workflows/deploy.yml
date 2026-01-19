@@ -30,11 +30,11 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
-      - name: Install Required Tools
+      - name: Install Helm
         uses: azure/setup-helm@v3
         with:
           version: 'v3.14.0'
-  
+
       - name: Install kubectl
         uses: azure/setup-kubectl@v3
         with:
@@ -46,40 +46,59 @@ jobs:
           terraform_version: 1.7.0
 
       - name: Terraform Init
-        working-directory: .
         run: |
           terraform init \
             -backend-config="bucket=optum-prod-bkt" \
             -backend-config="region=ap-south-1" \
             -backend-config="key=terraform.tfstate"
 
-      - name: Terraform Validate and Plan
-        working-directory: .
+      # ---------------- APPLY ----------------
+      - name: Terraform Apply
         if: ${{ github.event.inputs.action == 'apply' }}
         run: |
           terraform validate
           terraform plan -out=tfplan
+          terraform apply -auto-approve tfplan
 
-      - name: Terraform Apply or Destroy Infrastructure
-        working-directory: .
-        run: |
-          if [ "${{ github.event.inputs.action }}" == "destroy" ]; then
-            echo "Destroying node groups first..."
-            terraform destroy -target=aws_eks_node_group.node_group -auto-approve || true
-
-            echo "Destroying EKS cluster..."
-            terraform destroy -target=aws_eks_cluster.eks -auto-approve || true
-
-
-            echo "Destroying remaining infrastructure..."
-            terraform destroy -auto-approve
-          else
-            terraform apply -auto-approve
-          fi
-          
       - name: Configure Kubernetes Access
         if: ${{ github.event.inputs.action == 'apply' }}
         run: |
           aws eks update-kubeconfig \
             --name ${CLUSTER_NAME} \
             --region ${AWS_REGION}
+
+      # ---------------- DESTROY ----------------
+      - name: Configure Kubernetes Access (Destroy)
+        if: ${{ github.event.inputs.action == 'destroy' }}
+        run: |
+          aws eks update-kubeconfig \
+            --name ${CLUSTER_NAME} \
+            --region ${AWS_REGION}
+
+      - name: Delete Kubernetes Resources FIRST
+        if: ${{ github.event.inputs.action == 'destroy' }}
+        run: |
+          kubectl delete ingress --all -A --ignore-not-found
+          kubectl delete svc --all -A --ignore-not-found
+          kubectl delete deploy --all -A --ignore-not-found
+          kubectl delete pods --all -A --ignore-not-found
+
+      - name: Destroy Helm Releases
+        if: ${{ github.event.inputs.action == 'destroy' }}
+        run: |
+          terraform destroy -target=helm_release.alb_controller -auto-approve || true
+
+      - name: Destroy Node Groups
+        if: ${{ github.event.inputs.action == 'destroy' }}
+        run: |
+          terraform destroy -target=aws_eks_node_group.node_group -auto-approve || true
+
+      - name: Destroy EKS Cluster
+        if: ${{ github.event.inputs.action == 'destroy' }}
+        run: |
+          terraform destroy -target=aws_eks_cluster.eks -auto-approve || true
+
+      - name: Destroy Remaining Infrastructure
+        if: ${{ github.event.inputs.action == 'destroy' }}
+        run: |
+          terraform destroy -auto-approve
