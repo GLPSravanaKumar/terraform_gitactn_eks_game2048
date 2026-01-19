@@ -201,7 +201,7 @@ resource "kubernetes_deployment" "deploy" {
   count = var.enable_k8s ? 1 : 0
   metadata {
     name      = "deploy-2048"
-    namespace = kubernetes_namespace.ns.metadata[0].name
+    namespace = kubernetes_namespace.ns[count.index].metadata[0].name
     labels = {
       "app.kubernetes.io/name" : "app-2048"
     }
@@ -250,7 +250,7 @@ resource "kubernetes_deployment" "deploy" {
 resource "kubernetes_service" "svc" {
   count = var.enable_k8s ? 1 : 0
   metadata {
-    namespace = kubernetes_namespace.ns.metadata[0].name
+    namespace = kubernetes_namespace.ns[count.index].metadata[0].name
     name      = "svc-2048"
   }
   spec {
@@ -271,7 +271,7 @@ resource "kubernetes_service" "svc" {
 resource "kubernetes_ingress_v1" "webapp_ingress" {
   count = var.enable_k8s ? 1 : 0
   metadata {
-    namespace = kubernetes_namespace.ns.metadata[0].name
+    namespace = kubernetes_namespace.ns[count.index].metadata[0].name
     name      = "ingress-2048"
     annotations = {
       "kubernetes.io/ingress.class"                     = "alb"
@@ -290,7 +290,7 @@ resource "kubernetes_ingress_v1" "webapp_ingress" {
           path_type = "Prefix"
           backend {
             service {
-              name = kubernetes_service.svc.metadata[0].name
+              name = kubernetes_service.svc[count.index].metadata[0].name
               port {
                 number = 80
               }
