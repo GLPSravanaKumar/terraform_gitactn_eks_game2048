@@ -34,6 +34,11 @@ jobs:
         uses: azure/setup-helm@v3
         with:
           version: 'v3.14.0'
+  
+      - name: Install kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'v1.29.0'
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
@@ -59,10 +64,10 @@ jobs:
         run: |
           if [ "${{ github.event.inputs.action }}" == "destroy" ]; then
             echo "Destroying node groups first..."
-            terraform destroy -target=aws_eks_node_group.this -auto-approve || true
+            terraform destroy -target=aws_eks_node_group.node_group -auto-approve || true
 
             echo "Destroying EKS cluster..."
-            terraform destroy -target=aws_eks_cluster.this -auto-approve || true
+            terraform destroy -target=aws_eks_cluster.eks -auto-approve || true
 
 
             echo "Destroying remaining infrastructure..."
@@ -70,7 +75,7 @@ jobs:
           else
             terraform apply -auto-approve
           fi
-
+          
       - name: Configure Kubernetes Access
         if: ${{ github.event.inputs.action == 'apply' }}
         run: |
