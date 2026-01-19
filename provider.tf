@@ -40,15 +40,16 @@ data "tls_certificate" "oidc_thumbprint" {
 
 # Add to provider.tf or main.tf
 provider "kubernetes" {
-  host                   = aws_eks_cluster.eks.endpoint
-  cluster_ca_certificate = base64decode(aws_eks_cluster.eks.certificate_authority[0].data)
-  token                  = data.aws_eks_cluster_auth.eks.token
+  host                   = var.enable_k8s ? aws_eks_cluster.eks.endpoint : null
+  cluster_ca_certificate = var.enable_k8s ? base64decode(aws_eks_cluster.eks.certificate_authority[0].data) : null
+  token                  = var.enable_k8s ? data.aws_eks_cluster_auth.eks.token : null
 }
+
 
 provider "helm" {
   kubernetes {
-    host                   = aws_eks_cluster.eks.endpoint
-    cluster_ca_certificate = base64decode(aws_eks_cluster.eks.certificate_authority[0].data)
-    token                  = data.aws_eks_cluster_auth.eks.token
+    host                   = var.enable_k8s ? aws_eks_cluster.eks.endpoint : null
+    cluster_ca_certificate = var.enable_k8s ? base64decode(aws_eks_cluster.eks.certificate_authority[0].data) : null
+    token                  = var.enable_k8s ? data.aws_eks_cluster_auth.eks.token : null
   }
 }
