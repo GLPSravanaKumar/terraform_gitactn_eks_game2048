@@ -191,8 +191,8 @@ resource "kubernetes_namespace" "ns" {
   depends_on = [
     aws_eks_cluster.eks,
     aws_eks_node_group.node_group,
-    aws_iam_role.eks_role,
-    aws_iam_role.eks_node_role
+    data.aws_iam_role.eks_role,
+    data.aws_iam_role.eks_node_role
   ]
 }
 
