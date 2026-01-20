@@ -125,3 +125,8 @@ jobs:
         if: ${{ github.event.inputs.action == 'destroy' }}
         run: |
           terraform destroy -auto-approve -var="enable_k8s=false"
+
+      - name: Delete s3 object
+        if: ${{ github.event.inputs.action == 'destroy' }}
+        run: |
+          aws s3 rm s3://optum-prod-bkt/terraform.tfstate

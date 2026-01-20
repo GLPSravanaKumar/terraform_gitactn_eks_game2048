@@ -8,7 +8,7 @@ spec:
   source:
     repoURL: https://github.com/GLPSravanaKumar/terraform_gitactn_eks_game2048.git
     targetRevision: main
-    path: k8s/game2048
+    path: .
   destination:
     server: https://kubernetes.default.svc
     namespace: game-2048
