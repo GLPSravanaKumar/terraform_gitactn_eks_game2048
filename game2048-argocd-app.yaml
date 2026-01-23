@@ -10,9 +10,10 @@ spec:
     targetRevision: main
     path: .
   destination:
-    server: https://kubernetes.default.svc
+    server: https://23ED2B324FB69131599421A2E658564E.gr7.ap-south-1.eks.amazonaws.com
     namespace: game-2048
   syncPolicy:
     automated:
       prune: true
       selfHeal: true
+      

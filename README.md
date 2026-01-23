@@ -68,3 +68,5 @@ terraform apply -auto-approve
 aws eks --region <your-region> update-kubeconfig --name <your-cluster-name>
 
 ![alt text](image.png)
+
+eksctl delete cluster --name game2048-glps-ekscluster --region ap-south-1

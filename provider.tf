@@ -23,6 +23,7 @@ provider "aws" {
       Environment = "Production"
       Project     = "WebAppOnEKS"
       Owner       = "glps"
+      ManagedBy = "Terraform"
     }
   }
 }

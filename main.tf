@@ -6,12 +6,7 @@ resource "aws_vpc" "main" {
   cidr_block           = var.vpc_cidr
   enable_dns_hostnames = true
   enable_dns_support   = true
-  tags = {
-    Name = "${var.cluster_name}/vpc"
-    "kubernetes.io/role/elb" = "1"
-    "kubernetes.io/ingress.class" = "1"
-    "kubernetes.io/cluster/${var.cluster_name}" = "owned"
-  }
+  tags = local.vpc_tags
 }
 
 resource "aws_subnet" "public" {
@@ -20,34 +15,23 @@ resource "aws_subnet" "public" {
   cidr_block              = var.public_subnet_cidrs[count.index]
   availability_zone       = element(data.aws_availability_zones.az.names, count.index)
   map_public_ip_on_launch = true
-  tags = {
-    Name                                        = "${var.cluster_name}/public-subnet-${count.index}"
-    "kubernetes.io/cluster/${var.cluster_name}" = "owned"
-    "kubernetes.io/role/elb"                    = "1"
-    "kubernetes.io/ingress.class" = "1"
-  }
+  tags = local.subnet_tags[count.index]
 }
 
 resource "aws_internet_gateway" "igw" {
   vpc_id = aws_vpc.main.id
-  tags = {
-    Name = "${var.cluster_name}/igw"
-  }
+  tags = local.internetgateway_tags
 }
 
 resource "aws_eip" "eip" {
   domain = "vpc"
-  tags = {
-    Name = "${var.cluster_name}/eip"
-  }
+  tags = local.eip_tags
 }
 
 resource "aws_nat_gateway" "nat" {
   subnet_id     = aws_subnet.public[0].id
   allocation_id = aws_eip.eip.id
-  tags = {
-    Name = "${var.cluster_name}/nat-gateway"
-  }
+  tags = local.natgateway_tags
   depends_on = [aws_eip.eip]
 }
 
@@ -57,9 +41,7 @@ resource "aws_route_table" "public_rt" {
     cidr_block = "0.0.0.0/0"
     gateway_id = aws_internet_gateway.igw.id
   }
-  tags = {
-    Name = "${var.cluster_name}/public_rt"
-  }
+  tags = local.public_rt_tags
 }
 
 resource "aws_route_table_association" "public_rt" {
@@ -148,12 +130,8 @@ resource "aws_eks_cluster" "eks" {
   vpc_config {
     subnet_ids = aws_subnet.public[*].id
   }
-
   depends_on = [aws_iam_role_policy_attachment.EKSClusterPolicy]
-
-  tags = {
-    Name = "${var.cluster_name}/cluster"
-  }
+  tags = local.ekscluster_tags
 }
 
 resource "aws_eks_node_group" "node_group" {
@@ -163,19 +141,16 @@ resource "aws_eks_node_group" "node_group" {
   subnet_ids      = aws_subnet.public[*].id
 
   scaling_config {
-    desired_size = 1
-    max_size     = 2
-    min_size     = 1
+    desired_size = var.node_desired_capacity
+    max_size     = var.node_max_size
+    min_size     = var.node_min_size
   }
 
-  ami_type       = "AL2023_x86_64_STANDARD" # Amazon Linux 2
-  instance_types = ["t3.medium"]
-  disk_size      = 20
+  ami_type       = var.node_ami_type  #"AL2023_x86_64_STANDARD" # Amazon Linux 2
+  instance_types = [var.node_instance_type]   #["t3.medium"]
+  disk_size      = var.node_disk_size   # 20
 
-  tags = {
-    "Name"                                              = "${var.cluster_name}/node_group"
-    "kubernetes.io/cluster/${aws_eks_cluster.eks.name}" = "owned"
-  }
+  tags = local.eksnodegroup_tags
 
   depends_on = [
     aws_iam_role_policy_attachment.eks_worker_node_policy,
@@ -187,7 +162,7 @@ resource "aws_eks_node_group" "node_group" {
 resource "kubernetes_namespace" "ns" {
   count = var.enable_k8s ? 1 : 0
   metadata {
-    name = "game-2048"
+    name = var.namespace  #"game-2048"
   }
   depends_on = [
     aws_eks_cluster.eks,
@@ -200,43 +175,37 @@ resource "kubernetes_namespace" "ns" {
 resource "kubernetes_deployment" "deploy" {
   count = var.enable_k8s ? 1 : 0
   metadata {
-    name      = "deploy-2048"
+    name      =  var.deployment_name #"deploy-2048"
     namespace = kubernetes_namespace.ns[count.index].metadata[0].name
     labels = {
-      "app.kubernetes.io/name" : "app-2048"
+      "appication" : "app-2048"
     }
   }
 
   spec {
-    replicas = 2
+    replicas = var.replica_count
     selector {
       match_labels = {
-        "app.kubernetes.io/name" : "app-2048"
+        "appication" : "app-2048"
       }
     }
     template {
       metadata {
         labels = {
-          "app.kubernetes.io/name" : "app-2048"
+          "appication" : "app-2048"
         }
       }
       spec {
         container {
-          image             = "public.ecr.aws/l6m2t8p7/docker-2048:latest"
-          name              = "container-2048"
+          image             = var.image #"public.ecr.aws/l6m2t8p7/docker-2048:latest"
+          name              = var.cluster_name
           image_pull_policy = "IfNotPresent"
           port {
             container_port = 80
           }
           resources {
-            limits = {
-              cpu    = "500m"
-              memory = "512Mi"
-            }
-            requests = {
-              cpu    = "250m"
-              memory = "256Mi"
-            }
+            limits = local.limits
+            requests = local.requests
           }
         }
       }
@@ -251,11 +220,11 @@ resource "kubernetes_service" "svc" {
   count = var.enable_k8s ? 1 : 0
   metadata {
     namespace = kubernetes_namespace.ns[count.index].metadata[0].name
-    name      = "svc-2048"
+    name      = var.service_name #"svc-2048"
   }
   spec {
     selector = {
-      "app.kubernetes.io/name" : "app-2048"
+      "appication" : "app-2048"
     }
     port {
       name        = "http"
@@ -263,7 +232,7 @@ resource "kubernetes_service" "svc" {
       port        = 80
       target_port = 80
     }
-    type = "NodePort"
+    type = var.service_type #"NodePort"
   }
   depends_on = [kubernetes_namespace.ns, kubernetes_deployment.deploy]
 }
@@ -272,13 +241,8 @@ resource "kubernetes_ingress_v1" "webapp_ingress" {
   count = var.enable_k8s ? 1 : 0
   metadata {
     namespace = kubernetes_namespace.ns[count.index].metadata[0].name
-    name      = "ingress-2048"
-    annotations = {
-      "kubernetes.io/ingress.class"                     = "alb"
-      "alb.ingress.kubernetes.io/scheme"       = "internet-facing"
-      "alb.ingress.kubernetes.io/target-type"  = "ip"
-      "alb.ingress.kubernetes.io/listen-ports" = "[{\"HTTP\": 80}]"
-    }
+    name      = var.alb_ingress_name #"ingress-2048"
+    annotations = local.annotations
   }
 
   spec {
@@ -349,14 +313,7 @@ resource "aws_iam_role" "alb_controller" {
         Federated = aws_iam_openid_connect_provider.oidc.arn
       },
       Condition = {
-        StringEquals = {
-          "${replace(aws_eks_cluster.eks.identity[0].oidc[0].issuer, "https://", "")}:sub" = "system:serviceaccount:kube-system:aws-load-balancer-controller"
-        }
-      },
-      Condition = {
-        StringEquals = {
-          "${replace(aws_eks_cluster.eks.identity[0].oidc[0].issuer, "https://", "")}:aud" = "sts.amazonaws.com"
-        }
+        StringEquals = local.albcontroller_policy_condtions
       }
     }]
   })
@@ -373,7 +330,7 @@ resource "aws_iam_role_policy_attachment" "alb_controller_attach" {
 resource "kubernetes_service_account" "alb_sa" {
   count = var.enable_k8s ? 1 : 0
   metadata {
-    name      = "aws-load-balancer-controller"
+    name      = var.service_acount_name #"aws-load-balancer-controller"
     namespace = "kube-system"
     annotations = {
       "eks.amazonaws.com/role-arn" = aws_iam_role.alb_controller.arn
@@ -384,11 +341,11 @@ resource "kubernetes_service_account" "alb_sa" {
 
 resource "helm_release" "alb_controller" {
   count = var.enable_k8s ? 1 : 0
-  name       = "aws-load-balancer-controller"
+  name       = var.helm_chart_name
   namespace  = "kube-system"
-  repository = "https://aws.github.io/eks-charts"
-  chart      = "aws-load-balancer-controller"
-  version    = "1.7.1"
+  repository = var.helm_repo_url #"https://aws.github.io/eks-charts"
+  chart      = var.helm_chart_name
+  version    = var.helm_version #"1.7.1"
 
   set {
     name  = "clusterName"
@@ -402,7 +359,7 @@ resource "helm_release" "alb_controller" {
 
   set {
     name  = "serviceAccount.name"
-    value = "aws-load-balancer-controller"
+    value = var.service_acount_name
   }
 
   set {
